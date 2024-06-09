@@ -1,0 +1,46 @@
+name: Push-to-EC2
+
+# Trigger deployment only on push to main branch
+on:
+push:
+branches:
+- main
+
+jobs:
+deploy:
+name: Deploy to EC2 on main branch push
+runs-on: ubuntu-latest
+
+- name: Deploy to Server 1
+uses: easingthemes/ssh-deploy@main
+env:
+SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+REMOTE_HOST: ${{ secrets.HOST_DNS }}
+REMOTE_USER: ${{ secrets.USERNAME }}
+TARGET: ${{ secrets.TARGET_DIR }}
+
+- name: Executing remote ssh commands using ssh key
+uses: appleboy/ssh-action@main
+with:
+host: ${{ secrets.HOST_DNS }}
+username: ${{ secrets.USERNAME }}
+key: ${{ secrets.EC2_SSH_KEY }}
+script: |
+# Ensure JDK 17 is installed
+if ! java -version 2>&1 | grep -q "17"; then
+echo "JDK 17 not found. Please install JDK 17."
+exit 1
+fi
+
+# Create the application directory if it doesn't exist
+sudo mkdir -p /opt/myapp
+
+# Move the JAR file to the application directory
+sudo mv /home/${{ secrets.USERNAME }}/app/*.jar /opt/myapp/
+
+# Change ownership of the application directory
+sudo chown -R ${{ secrets.USERNAME }}:${{ secrets.USERNAME }} /opt/myapp
+
+# Navigate to the application directory and run the JAR file
+cd /opt/myapp
+sudo nohup java -jar *.jar > app.log 2>&1 &
