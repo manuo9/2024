@@ -56,6 +56,7 @@ jobs:
 
             # Navigate to the application directory and run the JAR file
             cd /opt/myapp
+            sleep 5
             # Get the latest JAR file
             # latest_jar=$(ls -t | grep .jar | head -n 1)
             # Run the latest JAR file
