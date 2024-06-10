@@ -7,8 +7,8 @@ on:
       - main
 
 jobs:
-  stop-app:
-    name: Stop existing application
+  stop-and-deploy:
+    name: Stop Existing Application, Deploy New JAR and Start
     runs-on: ubuntu-latest
 
     steps:
@@ -30,6 +30,7 @@ jobs:
           else
             echo "No JAR file process found"
           fi
+          echo "Process stopped."
 
     - name: Remove old JAR files
       uses: appleboy/ssh-action@v1.0.2
@@ -45,15 +46,6 @@ jobs:
           sudo rm -f *.jar
           echo "Old JAR files deleted."
 
-  deploy-jar:
-    name: Deploy JAR to EC2
-    runs-on: ubuntu-latest
-    needs: stop-app
-
-    steps:
-    - name: Checkout the files
-      uses: actions/checkout@v2
-
     - name: Deploy JAR to EC2
       uses: easingthemes/ssh-deploy@main
       env:
@@ -62,13 +54,7 @@ jobs:
         REMOTE_USER: ${{ secrets.USERNAME }}
         TARGET: /home/${{ secrets.USERNAME }}/app
 
-  start-app:
-    name: Start new application
-    runs-on: ubuntu-latest
-    needs: deploy-jar
-
-    steps:
-    - name: Executing remote ssh commands using ssh key
+    - name: Start new application
       uses: appleboy/ssh-action@v1.0.2
       with:
         host: ${{ secrets.HOST_DNS }}
