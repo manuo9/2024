@@ -40,14 +40,7 @@ jobs:
 
             # Create the application directory if it doesn't exist
             sudo mkdir -p /opt/myapp
-            # killing all java application running in ec2
-            sudo pkill -f 'java -jar'
-            # Wait for a moment to ensure all Java processes are stopped
-            sleep 20
-            
-            if pgrep -f 'java -jar'; then
-              sudo pkill -9 -f 'java -jar'
-            fi
+          
             # removing all jar files in opt/myapp
             sudo rm -f /opt/myapp/*.jar
 
