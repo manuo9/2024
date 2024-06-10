@@ -41,7 +41,7 @@ jobs:
           cd /home/${{ secrets.USERNAME }}/app
 
           # Run the JAR file
-          sudo java -jar userLogin.jar &
+          sudo nohup java -jar *.jar &
           sleep 10
 
           echo "JAR file is running."
