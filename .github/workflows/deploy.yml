@@ -53,7 +53,7 @@ jobs:
             # Navigate to the application directory and run the JAR file
             cd /opt/myapp
             # Get the latest JAR file
-            latest_jar=$(ls -t | grep .jar | head -n 1)
+            # latest_jar=$(ls -t | grep .jar | head -n 1)
             # Run the latest JAR file
             sudo nohup java -jar $latest_jar > app.log 2>&1 &
-            sleep 20
+            sleep 10
