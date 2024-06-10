@@ -45,12 +45,14 @@ jobs:
           
             # removing all jar files in opt/myapp
             sudo rm -f /opt/myapp/*.jar || echo "No JAR files to remove."
+            sleep 5
 
             # Move the JAR file to the application directory
             sudo mv /home/${{ secrets.USERNAME }}/app/*.jar /opt/myapp/
+            sleep 5
 
             # Change ownership of the application directory
-            sudo chown -R ${{ secrets.USERNAME }}:${{ secrets.USERNAME }} /opt/myapp
+            # sudo chown -R ${{ secrets.USERNAME }}:${{ secrets.USERNAME }} /opt/myapp
 
             # Navigate to the application directory and run the JAR file
             cd /opt/myapp
