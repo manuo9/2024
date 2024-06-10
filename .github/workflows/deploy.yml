@@ -39,9 +39,10 @@ jobs:
 
           # Navigate to the application directory and run the JAR file
           cd /home/${{ secrets.USERNAME }}/app
+          sleep 10
 
           # Run the JAR file
-          sudo nohup java -jar *.jar &
+          sudo java -jar *.jar &
           sleep 10
 
           echo "JAR file is running."
