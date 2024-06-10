@@ -2,63 +2,65 @@ name: Push-to-EC2
 
 # Trigger deployment only on push to main branch
 on:
-  push:
-    branches:
-      - main
+push:
+branches:
+- main
 
 jobs:
-  deploy:
-    name: Deploy to EC2 on main branch push
-    runs-on: ubuntu-latest
+deploy:
+name: Deploy to EC2 on main branch push
+runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout the files
-        uses: actions/checkout@v2
+steps:
+- name: Checkout the files
+uses: actions/checkout@v2
 
-      - name: Deploy JAR to EC2
-        uses: easingthemes/ssh-deploy@main
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
-          REMOTE_HOST: ${{ secrets.HOST_DNS }}
-          REMOTE_USER: ${{ secrets.USERNAME }}
-          TARGET: /home/${{ secrets.USERNAME }}/app
+- name: Deploy JAR to EC2
+uses: easingthemes/ssh-deploy@main
+env:
+SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+REMOTE_HOST: ${{ secrets.HOST_DNS }}
+REMOTE_USER: ${{ secrets.USERNAME }}
+TARGET: /home/${{ secrets.USERNAME }}/app
 
-      - name: Executing remote ssh commands using ssh key
-        uses: appleboy/ssh-action@v1.0.2
-        with:
-          host: ${{ secrets.HOST_DNS }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-          
-            if ! java -version 2>&1 | grep -q "21"; then
-              echo "JDK 21 not found. Please install JDK 21."
-              exit 1
-            else
-              echo "JDK 21 is already installed."
-            fi
+- name: Executing remote ssh commands using ssh key
+uses: appleboy/ssh-action@v1.0.2
+with:
+host: ${{ secrets.HOST_DNS }}
+username: ${{ secrets.USERNAME }}
+key: ${{ secrets.EC2_SSH_KEY }}
+script: |
 
-            # Create the application directory if it doesn't exist
-            sudo mkdir -p /opt/myapp
+if ! java -version 2>&1 | grep -q "21"; then
+echo "JDK 21 not found. Please install JDK 21."
+exit 1
+else
+echo "JDK 21 is already installed."
+fi
 
-            sleep 5
-          
-            # removing all jar files in opt/myapp
-            sudo rm -f /opt/myapp/*.jar || echo "No JAR files to remove."
-            sleep 5
+# Create the application directory if it doesn't exist
+# sudo mkdir -p /opt/myapp
 
-            # Move the JAR file to the application directory
-            sudo mv /home/${{ secrets.USERNAME }}/app/*.jar /opt/myapp/
-            sleep 5
+# sleep 5
 
-            # Change ownership of the application directory
-            # sudo chown -R ${{ secrets.USERNAME }}:${{ secrets.USERNAME }} /opt/myapp
+# removing all jar files in opt/myapp
+# sudo rm -f /opt/myapp/*.jar || echo "No JAR files to remove."
+# sleep 5
 
-            # Navigate to the application directory and run the JAR file
-            cd /opt/myapp
-            sleep 5
-            # Get the latest JAR file
-            # latest_jar=$(ls -t | grep .jar | head -n 1)
-            # Run the latest JAR file
-            sudo java -jar userLogin.jar &
-            sleep 10
+# Move the JAR file to the application directory
+# sudo mv /home/${{ secrets.USERNAME }}/app/*.jar /opt/myapp/
+# sleep 5
+
+# Change ownership of the application directory
+# sudo chown -R ${{ secrets.USERNAME }}:${{ secrets.USERNAME }} /opt/myapp
+
+# Navigate to the application directory and run the JAR file
+cd /home/${{ secrets.USERNAME }}
+# sleep 5
+# Get the latest JAR file
+# latest_jar=$(ls -t | grep .jar | head -n 1)
+# Run the latest JAR file
+sudo java -jar userLogin.jar &
+sleep 10
+
+echo "JAR file is running."
