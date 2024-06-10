@@ -43,7 +43,7 @@ jobs:
             # killing all java application running in ec2
             sudo pkill -f 'java -jar'
             # Wait for a moment to ensure all Java processes are stopped
-            sleep 5
+            sleep 20
             
             if pgrep -f 'java -jar'; then
               sudo pkill -9 -f 'java -jar'
@@ -63,4 +63,4 @@ jobs:
             latest_jar=$(ls -t | grep .jar | head -n 1)
             # Run the latest JAR file
             sudo nohup java -jar $latest_jar > app.log 2>&1 &
-            sleep 10
+            sleep 20
