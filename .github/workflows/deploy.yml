@@ -58,6 +58,7 @@ jobs:
             echo "Some JAR files are still present:"
             echo "$jar_files"
             exit 1
+          fi
 
   deploy-new-jar:
     name: Deploy New JAR
