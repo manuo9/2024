@@ -24,6 +24,7 @@ jobs:
         script: |
           # Navigate to the application directory
           cd /home/${{ secrets.USERNAME }}/app
+          touch test.txt
           
           # Remove all existing JAR files
           sudo rm -f *.jar
