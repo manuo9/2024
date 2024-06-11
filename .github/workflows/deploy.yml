@@ -15,23 +15,6 @@ jobs:
     - name: Checkout the files
       uses: actions/checkout@v2
 
-    - name: Stop existing application
-      uses: appleboy/ssh-action@v1.0.2
-      with:
-        host: ${{ secrets.HOST_DNS }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          # Find and kill the process running the JAR file
-          PID=$(pgrep -f 'java -jar /home/${{ secrets.USERNAME }}/app/.*\.jar')
-          if [ ! -z "$PID" ]; then
-            echo "Killing process $PID running the JAR file"
-            sudo kill -9 $PID
-          else
-            echo "No JAR file process found"
-          fi
-          echo "Process stopped."
-
     - name: Remove old JAR files
       uses: appleboy/ssh-action@v1.0.2
       with:
