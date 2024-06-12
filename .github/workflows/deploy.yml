@@ -1,69 +1,16 @@
-name: Push-to-EC2
+name: Deploy and Start
 
-# Trigger deployment only on push to main branch
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Stop and Clean"]
+    types:
+      - completed
+  workflow_dispatch:
 
 jobs:
-  stop-application:
-    name: Stop Existing Application
+  deploy-and-start:
+    name: Deploy New JAR and Start Application
     runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout the files
-      uses: actions/checkout@v2
-
-    - name: Find and kill existing process on port 8084
-      uses: appleboy/ssh-action@v1.0.2
-      with:
-        host: ${{ secrets.HOST_DNS }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          pid=$(sudo lsof -t -i :8084)
-          if [[ ! -z "$pid" ]]; then
-            echo "Killing process on port 8084 with PID $pid"
-            sudo kill -9 $pid
-          else
-            echo "No processes found listening on port 8084"
-          fi
-
-  remove-old-jars:
-    name: Remove Old JAR Files
-    runs-on: ubuntu-latest
-    needs: stop-application
-
-    steps:
-    - name: Checkout the files
-      uses: actions/checkout@v2
-
-    - name: Remove old JAR files
-      uses: appleboy/ssh-action@v1.0.2
-      with:
-        host: ${{ secrets.HOST_DNS }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          cd /home/${{ secrets.USERNAME }}/app
-          sudo rm -f *.jar
-          echo "Old JAR files deleted."
-          
-          # Verify deletion
-          jar_files=$(ls /home/${{ secrets.USERNAME }}/app/*.jar 2> /dev/null)
-          if [[ -z "$jar_files" ]]; then
-            echo "No JAR files present."
-          else
-            echo "Some JAR files are still present:"
-            echo "$jar_files"
-            exit 1
-          fi
-
-  deploy-new-jar:
-    name: Deploy New JAR
-    runs-on: ubuntu-latest
-    needs: remove-old-jars
 
     steps:
     - name: Checkout the files
@@ -76,15 +23,6 @@ jobs:
         REMOTE_HOST: ${{ secrets.HOST_DNS }}
         REMOTE_USER: ${{ secrets.USERNAME }}
         TARGET: /home/${{ secrets.USERNAME }}/app
-
-  start-application:
-    name: Start New Application
-    runs-on: ubuntu-latest
-    needs: deploy-new-jar
-
-    steps:
-    - name: Checkout the files
-      uses: actions/checkout@v2
 
     - name: Start new application
       uses: appleboy/ssh-action@v1.0.2
@@ -99,7 +37,12 @@ jobs:
           else
             echo "JDK 17 is already installed."
           fi
+
+          # Navigate to the application directory
           cd /home/${{ secrets.USERNAME }}/app
+
+          # Run the new JAR file
           sudo java -jar *.jar &
           sleep 10
+
           echo "New JAR file is running."
