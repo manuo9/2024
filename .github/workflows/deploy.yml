@@ -1,27 +1,43 @@
-name: Push-to-EC2
+name: Stop and Clean
 
-# Trigger deployment only on push to main branch
 on:
   workflow_dispatch:
+
 jobs:
-  deploy:
-    name: Deploy to EC2 on main branch push
+  stop-and-clean:
+    name: Stop Existing Application and Clean Directory
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout the files
       uses: actions/checkout@v2
-      
-    - name: Remove old JAR files
+
+    - name: Find and kill existing process on port 8084
       uses: appleboy/ssh-action@v1.0.2
       with:
         host: ${{ secrets.HOST_DNS }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
+          PID=$(sudo lsof -t -i :8084)
+          if [[ ! -z "$PID" ]]; then
+            echo "Killing process on port 8084 with PID $PID"
+            sudo kill -9 $PID
+          else
+            echo "No processes found listening on port 8084"
+          fi
+          
           # Navigate to the application directory
           cd /home/${{ secrets.USERNAME }}/app
-          
           # Remove all existing JAR files
           sudo rm -f *.jar
           echo "Old JAR files deleted."
+          # Verify deletion
+          jar_files=$(ls /home/${{ secrets.USERNAME }}/app/*.jar 2> /dev/null)
+          if [[ -z "$jar_files" ]]; then
+            echo "No JAR files present."
+          else
+            echo "Some JAR files are still present:"
+            echo "$jar_files"
+            exit 1
+          fi
