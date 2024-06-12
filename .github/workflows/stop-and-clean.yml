@@ -29,14 +29,7 @@ jobs:
           else
             echo "No processes found listening on port 8084"
           fi
-
-    - name: Remove old JAR files
-      uses: appleboy/ssh-action@v1.0.2
-      with:
-        host: ${{ secrets.HOST_DNS }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
+          
           # Navigate to the application directory
           cd /home/${{ secrets.USERNAME }}/app
 
