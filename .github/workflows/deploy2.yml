@@ -24,7 +24,7 @@ jobs:
     - name: Download latest JAR file from GitHub release
       id: download-jar
       run: |
-        latest_release=$(curl -s https://api.github.com/repos/OWNER/REPO/releases/latest | jq -r '.assets[] | select(.name | endswith(".jar")) | .browser_download_url')
+        latest_release=$(curl -s https://api.github.com/repos/manuo9/2024/releases/latest | jq -r '.assets[] | select(.name | endswith(".jar")) | .browser_download_url')
         wget "$latest_release" -O latest.jar
 
     - name: Copy JAR file to EC2
