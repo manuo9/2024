@@ -35,9 +35,7 @@ jobs:
         REMOTE_HOST: ${{ secrets.HOST_DNS }}
         REMOTE_USER: ${{ secrets.USERNAME }}
         TARGET: /home/${{ secrets.USERNAME }}/app
-      with:
-        args: ${{ steps.find_latest_jar.outputs.jar_path }}
-
+        
     - name: Start new application
       uses: appleboy/ssh-action@v0.1.7
       with:
