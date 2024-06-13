@@ -28,8 +28,8 @@ jobs:
         echo "Latest JAR file found: $latest_jar"
         echo "::set-output name=jar_path::$latest_jar"
 
-    - name: Upload new JAR to EC2
-      uses: easingthemes/ssh-deploy@v2.0.7
+    - name: Deploy JAR to EC2
+      uses: easingthemes/ssh-deploy@main
       env:
         SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
         REMOTE_HOST: ${{ secrets.HOST_DNS }}
