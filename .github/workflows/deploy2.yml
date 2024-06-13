@@ -16,30 +16,20 @@ jobs:
     - name: Checkout the files
       uses: actions/checkout@v2
 
-    - name: Deploy JAR to EC2
-      uses: easingthemes/ssh-deploy@main
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
-        REMOTE_HOST: ${{ secrets.HOST_DNS }}
-        REMOTE_USER: ${{ secrets.USERNAME }}
-        TARGET: /home/${{ secrets.USERNAME }}/app
-
-    - name: Start new application
-      uses: appleboy/ssh-action@v1.0.2
+    - name: Set up SSH key
+      uses: webfactory/ssh-agent@v0.5.3
       with:
-        host: ${{ secrets.HOST_DNS }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          if ! java -version 2>&1 | grep -q "17"; then
-            echo "JDK 17 not found. Please install JDK 17."
-            exit 1
-          else
-            echo "JDK 17 is already installed."
-          fi
-          # Navigate to the application directory
-          cd /home/${{ secrets.USERNAME }}/app
-          # Run the new JAR file
-          sudo java -jar *.jar &
-          sleep 10
-          echo "New JAR file is running."
+        ssh-private-key: ${{ secrets.EC2_SSH_KEY }}  
+
+    - name: Download latest JAR file from GitHub release
+      id: download-jar
+      run: |
+        latest_release=$(curl -s https://api.github.com/repos/OWNER/REPO/releases/latest | jq -r '.assets[] | select(.name | endswith(".jar")) | .browser_download_url')
+        wget "$latest_release" -O latest.jar
+
+    - name: Copy JAR file to EC2
+      run: scp -i ${{ secrets.EC2_SSH_KEY }} latest.jar ${{ secrets.USERNAME }}@${{ secrets.HOST_DNS }}:/home/${{ secrets.USERNAME }}/app
+
+    - name: Run JAR file on EC2
+      run: |
+        ssh -i ${{ secrets.EC2_SSH_KEY }} ${{ secrets.USERNAME }}@${{ secrets.HOST_DNS }} "cd /home/${{ secrets.USERNAME }}/app && sudo nohup java -jar latest.jar > /dev/null 2>&1 &"
