@@ -5,6 +5,7 @@ on:
     workflows: ["Stop-and-Clean"]
     types:
       - completed
+  workflow_dispatch:    
 
 jobs:
   deploy-and-start:
