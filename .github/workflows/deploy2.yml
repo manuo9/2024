@@ -53,6 +53,7 @@ jobs:
           echo "Extracted filename: $latest_jars"
           # Navigate to the application directory and run the new JAR file
           cd /home/${{ secrets.USERNAME }}/app
-          sudo java -jar "/home/${{ secrets.USERNAME }}/app/${latest_jars}" &
+          latest_jars=$(basename "$latest_jars")
+          sudo java -jar \"$latest_jars\" &
           sleep 10
           echo "New JAR file is running."
