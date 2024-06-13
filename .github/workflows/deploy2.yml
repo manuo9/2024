@@ -1,35 +1,63 @@
-name: Deploy and Start
+name: Deploy-and-Start
 
 on:
   workflow_run:
-    workflows: ["Stop and Clean"]
+    workflows: ["Stop-and-Clean"]
     types:
       - completed
-  workflow_dispatch:
 
 jobs:
   deploy-and-start:
-    name: Deploy New JAR and Start Application
+    name: Deploy New Application and Start
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout the files
+    - name: Checkout the repository
       uses: actions/checkout@v2
 
-    - name: Set up SSH key
-      uses: webfactory/ssh-agent@v0.5.3
-      with:
-        ssh-private-key: ${{ secrets.EC2_SSH_KEY }}  
+    - name: Install jq for JSON parsing
+      run: sudo apt-get update && sudo apt-get install -y jq
 
-    - name: Download latest JAR file from GitHub release
-      id: download-jar
+    - name: Fetch latest release JAR URL
+      id: get_latest_release
       run: |
         latest_release=$(curl -s https://api.github.com/repos/manuo9/2024/releases/latest | jq -r '.assets[] | select(.name | endswith(".jar")) | .browser_download_url')
-        wget "$latest_release" -O latest.jar
+        if [ -z "$latest_release" ]; then
+          echo "Error: No JAR file found in the latest release."
+          exit 1
+        fi
+        echo "Latest release JAR URL: $latest_release"
+        echo "::set-output name=jar_url::$latest_release"
 
-    - name: Copy JAR file to EC2
-      run: scp -i ${{ secrets.EC2_SSH_KEY }} latest.jar ${{ secrets.USERNAME }}@${{ secrets.HOST_DNS }}:/home/${{ secrets.USERNAME }}/app
-
-    - name: Run JAR file on EC2
+    - name: Download the latest JAR file
       run: |
-        ssh -i ${{ secrets.EC2_SSH_KEY }} ${{ secrets.USERNAME }}@${{ secrets.HOST_DNS }} "cd /home/${{ secrets.USERNAME }}/app && sudo nohup java -jar latest.jar > /dev/null 2>&1 &"
+        curl -L -o latest_app.jar "${{ steps.get_latest_release.outputs.jar_url }}"
+
+    - name: Upload new JAR to EC2
+      uses: easingthemes/ssh-deploy@main
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+        REMOTE_HOST: ${{ secrets.HOST_DNS }}
+        REMOTE_USER: ${{ secrets.USERNAME }}
+        TARGET: /home/${{ secrets.USERNAME }}/app
+      with:
+        args: "latest_app.jar"
+
+    - name: Start new application
+      uses: appleboy/ssh-action@v1.0.2
+      with:
+        host: ${{ secrets.HOST_DNS }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          if ! java -version 2>&1 | grep -q "17"; then
+            echo "JDK 17 not found. Please install JDK 17."
+            exit 1
+          else
+            echo "JDK 17 is already installed."
+          fi
+          # Navigate to the application directory and run the new JAR file
+          cd /home/${{ secrets.USERNAME }}/app
+          sudo java -jar latest_app.jar &
+          sleep 10
+          echo "New JAR file is running."
