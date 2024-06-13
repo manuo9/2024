@@ -29,17 +29,17 @@ jobs:
         echo "::set-output name=jar_path::$latest_jar"
 
     - name: Upload new JAR to EC2
-      uses: easingthemes/ssh-deploy@main
+      uses: easingthemes/ssh-deploy@v2.0.7
       env:
         SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
         REMOTE_HOST: ${{ secrets.HOST_DNS }}
         REMOTE_USER: ${{ secrets.USERNAME }}
         TARGET: /home/${{ secrets.USERNAME }}/app
       with:
-        args: "${{ steps.find_latest_jar.outputs.jar_path }}"
+        args: ${{ steps.find_latest_jar.outputs.jar_path }}
 
     - name: Start new application
-      uses: appleboy/ssh-action@v1.0.2
+      uses: appleboy/ssh-action@v0.1.7
       with:
         host: ${{ secrets.HOST_DNS }}
         username: ${{ secrets.USERNAME }}
