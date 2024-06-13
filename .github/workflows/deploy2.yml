@@ -5,7 +5,8 @@ on:
     workflows: ["Stop-and-Clean"]
     types:
       - completed
-  workflow_dispatch:    
+
+  workflow_dispatch:
 
 jobs:
   deploy-and-start:
@@ -22,7 +23,10 @@ jobs:
     - name: Fetch latest release JAR URL
       id: get_latest_release
       run: |
-        latest_release=$(curl -s https://api.github.com/repos/manuo9/2024/releases/latest | jq -r '.assets[] | select(.name | endswith(".jar")) | .browser_download_url')
+        echo "Fetching latest release from GitHub..."
+        response=$(curl -s https://api.github.com/repos/manuo9/2024/releases/latest)
+        echo "Response: $response"
+        latest_release=$(echo $response | jq -r '.assets[] | select(.name | endswith(".jar")) | .browser_download_url')
         if [ -z "$latest_release" ]; then
           echo "Error: No JAR file found in the latest release."
           exit 1
