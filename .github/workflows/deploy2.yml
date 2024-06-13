@@ -17,26 +17,16 @@ jobs:
     - name: Checkout the repository
       uses: actions/checkout@v2
 
-    - name: Install jq for JSON parsing
-      run: sudo apt-get update && sudo apt-get install -y jq
-
-    - name: Fetch latest release JAR URL
-      id: get_latest_release
+    - name: Find the latest JAR file
+      id: find_latest_jar
       run: |
-        echo "Fetching latest release from GitHub..."
-        response=$(curl -s https://api.github.com/repos/manuo9/2024/releases/latest)
-        echo "Response: $response"
-        latest_release=$(echo $response | jq -r '.assets[] | select(.name | endswith(".jar")) | .browser_download_url')
-        if [ -z "$latest_release" ]; then
-          echo "Error: No JAR file found in the latest release."
+        latest_jar=$(find . -name "*.jar" | sort | tail -n 1)
+        if [ -z "$latest_jar" ]; then
+          echo "Error: No JAR file found in the repository."
           exit 1
         fi
-        echo "Latest release JAR URL: $latest_release"
-        echo "::set-output name=jar_url::$latest_release"
-
-    - name: Download the latest JAR file
-      run: |
-        curl -L -o latest_app.jar "${{ steps.get_latest_release.outputs.jar_url }}"
+        echo "Latest JAR file found: $latest_jar"
+        echo "::set-output name=jar_path::$latest_jar"
 
     - name: Upload new JAR to EC2
       uses: easingthemes/ssh-deploy@main
@@ -46,7 +36,7 @@ jobs:
         REMOTE_USER: ${{ secrets.USERNAME }}
         TARGET: /home/${{ secrets.USERNAME }}/app
       with:
-        args: "latest_app.jar"
+        args: "${{ steps.find_latest_jar.outputs.jar_path }}"
 
     - name: Start new application
       uses: appleboy/ssh-action@v1.0.2
@@ -63,6 +53,6 @@ jobs:
           fi
           # Navigate to the application directory and run the new JAR file
           cd /home/${{ secrets.USERNAME }}/app
-          sudo java -jar latest_app.jar &
+          sudo java -jar $(basename ${{ steps.find_latest_jar.outputs.jar_path }}) &
           sleep 10
           echo "New JAR file is running."
