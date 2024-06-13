@@ -49,9 +49,10 @@ jobs:
           else
             echo "JDK 17 is already installed."
           fi
-          echo "Latest JAR file found: $latest_jar"
+          latest_jars=$(find . -name "*.jar" | sort | tail -n 1)
+          echo "Extracted filename: $latest_jars"
           # Navigate to the application directory and run the new JAR file
           cd /home/${{ secrets.USERNAME }}/app
-          sudo java -jar $(basename ${{ steps.find_latest_jar.outputs.jar_path }}) &
+          sudo java -jar "/home/${{ secrets.USERNAME }}/app/${latest_jars}" &
           sleep 10
           echo "New JAR file is running."
