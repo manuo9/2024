@@ -12,21 +12,41 @@ jobs:
     - name: Checkout the files
       uses: actions/checkout@v2
 
-    - name: Find and kill existing process on port 8084
+    - name: Find and kill existing processes on ports 8080 and 8084, then clean directory
       uses: appleboy/ssh-action@v1.0.2
       with:
         host: ${{ secrets.HOST_DNS }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          PID=$(sudo lsof -t -i :8084)
-          if [[ ! -z "$PID" ]]; then
-            echo "Killing process on port 8084 with PID $PID"
-            sudo kill -9 $PID
-          else
-            echo "No processes found listening on port 8084"
-          fi
-          
+          kill_process_on_port() {
+            local port=$1
+            PID=$(sudo lsof -t -i :$port)
+            if [[ ! -z "$PID" ]]; then
+              JAR_FILE=$(sudo lsof -p $PID | grep ".jar" | awk '{print $9}')
+              if [[ ! -z "$JAR_FILE" ]]; then
+                echo "Process on port $port with PID $PID is running JAR file: $JAR_FILE"
+              else
+                echo "Process on port $port with PID $PID is not associated with a JAR file."
+              fi
+              read -p "Do you want to kill the process on port $port? (y/n): " choice
+              if [[ "$choice" == "y" ]]; then
+                sudo kill -9 $PID
+                echo "Killed process on port $port with PID $PID"
+              else
+                echo "Skipping killing process on port $port"
+              fi
+            else
+              echo "No processes found listening on port $port"
+            fi
+          }
+
+          # Kill process on port 8080
+          kill_process_on_port 8080
+
+          # Kill process on port 8084
+          kill_process_on_port 8084
+
           # Navigate to the application directory
           cd /home/${{ secrets.USERNAME }}/app
           # Remove all existing JAR files
