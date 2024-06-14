@@ -41,8 +41,8 @@ jobs:
             fi
           }
 
-          # Kill process on port 8080
-          kill_process_on_port 8080
+          # Kill process on port 8080 true
+          kill_process_on_port 8080 true
 
           # Kill process on port 8084
           kill_process_on_port 8084
