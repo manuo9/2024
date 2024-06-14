@@ -13,7 +13,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Find and kill existing processes on ports 8080 and 8084, then clean directory
-      uses: appleboy/ssh-action@v1.0.2
+      uses: appleboy/ssh-action@v0.1.6
       with:
         host: ${{ secrets.HOST_DNS }}
         username: ${{ secrets.USERNAME }}
@@ -29,23 +29,19 @@ jobs:
               else
                 echo "Process on port $port with PID $PID is not associated with a JAR file."
               fi
-              read -p "Do you want to kill the process on port $port? (y/n): " choice
-              if [[ "$choice" == "y" ]]; then
-                sudo kill -9 $PID
-                echo "Killed process on port $port with PID $PID"
-              else
-                echo "Skipping killing process on port $port"
-              fi
+              # Automatically assume "yes" and kill the process
+              sudo kill -9 $PID
+              echo "Killed process on port $port with PID $PID"
             else
               echo "No processes found listening on port $port"
             fi
           }
 
-          # Kill process on port 8080 
-          kill_process_on_port 8080 true
+          # Kill process on port 8080
+          kill_process_on_port 8080
 
           # Kill process on port 8084
-          kill_process_on_port 8084 true
+          kill_process_on_port 8084
 
           # Navigate to the application directory
           cd /home/${{ secrets.USERNAME }}/app
