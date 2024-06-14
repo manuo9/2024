@@ -50,6 +50,7 @@ jobs:
             echo "JDK 17 is already installed."
           fi
           cd /home/ubuntu/2024
+          git pull https://github.com/manuo9/2024.git
           latest_jars=$(find . -name "*.jar" | sort | tail -n 1)
           echo "Extracted filename: $latest_jars"
           # Navigate to the application directory and run the new JAR file
